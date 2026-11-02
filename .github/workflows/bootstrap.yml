@@ -1,0 +1,19 @@
+name: Publish prebuilt image
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bootstrap.yml]
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - run: |
+          command -v skopeo >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq skopeo)
+          printf '%s' "$GH_TOKEN" | skopeo login --username "$GITHUB_ACTOR" --password-stdin ghcr.io
+          skopeo copy docker://ttl.sh/vast-swiss-knife-2e26c46d-aa23-4657-8d3a-49432a8de75d@sha256:417bcd0f990dc7d627eb88e2ab113699ffd46a4561b18eda47c46f506f876c64 docker://ghcr.io/${{ github.repository }}:latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
